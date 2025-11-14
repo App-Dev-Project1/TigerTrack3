@@ -1,8 +1,10 @@
+// src/components/LostItemForm.jsx
 import React, { useState } from 'react';
 import { Button, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import tigerLogo from '../assets/tiger.png';
 import './LostItemForm.css';
+import { supabase } from '../supabaseClient'; 
 
 const LostItemForm = () => {
   const navigate = useNavigate();
@@ -37,9 +39,11 @@ const LostItemForm = () => {
     setFormData(prevState => ({ ...prevState, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  // --- UPDATED handleSubmit FUNCTION ---
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // --- All your existing validation (this is good!) ---
     if (!formData.ownerName || !formData.itemName || !formData.category || !formData.occupancy ||
       !formData.floor || !formData.location || !formData.date ||
       !formData.time || !formData.contactNumber || !formData.contactEmail) {
@@ -63,27 +67,62 @@ const LostItemForm = () => {
       alert('Please enter a valid contact number');
       return;
     }
+    // --- End of validation ---
 
-    console.log('Lost Item Report:', formData);
-    alert('Your lost item report has been submitted successfully!');
 
-    setFormData({
-      ownerName: '',
-      occupancy: '',
-      itemName: '',
-      category: '',
-      floor: '',
-      location: '',
-      specificLocation: '',
-      date: '',
-      time: '',
-      contactNumber: '',
-      contactEmail: '',
-      description: '',
-    });
+    // --- 3. START SUPABASE LOGIC (FIXED) ---
+    try {
+      const finalLocation = (formData.location === 'Room' || formData.location === 'Other') && formData.specificLocation
+        ? `${formData.location}: ${formData.specificLocation}`
+        : formData.location;
 
-    navigate('/');
+      const { data, error } = await supabase
+        .from('lost_items')
+        .insert([
+          {
+            owner_name: formData.ownerName, // <-- SAVES "Rafael"
+            name: formData.itemName,       // <-- SAVES "White iPhone 13"
+            occupation: formData.occupancy,  // <-- SAVES "Student"
+            category: formData.category,
+            floor: formData.floor,
+            location: finalLocation,
+            lost_date: formData.date,
+            lost_time: formData.time,
+            description: formData.description,
+            contact_number: formData.contactNumber,
+            contact_email: formData.contactEmail,
+            status: 'pending'
+          }
+        ]);
+        
+      if (error) throw error; 
+
+      alert('Your lost item report has been submitted successfully!');
+
+      setFormData({
+        ownerName: '',
+        occupancy: '',
+        itemName: '',
+        category: '',
+        floor: '',
+        location: '',
+        specificLocation: '',
+        date: '',
+        time: '',
+        contactNumber: '',
+        contactEmail: '',
+        description: '',
+      });
+
+      navigate('/'); 
+
+    } catch (error) {
+      console.error('Error submitting lost item report:', error);
+      alert('Error submitting report: ' + error.message);
+    }
   };
+  // --- END OF UPDATED FUNCTION ---
+
 
   return (
     <div className="lost-form-page">
@@ -147,7 +186,6 @@ const LostItemForm = () => {
                 </Form.Select>
               </Form.Group>
 
-              {/* ✅ Conditional "Please Specify" Field */}
               {(formData.location === 'Room' || formData.location === 'Other') && (
                 <Form.Group className="mb-3">
                   <Form.Label>

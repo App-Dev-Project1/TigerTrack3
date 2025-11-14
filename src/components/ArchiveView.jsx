@@ -1,46 +1,55 @@
+// src/components/ArchiveView.jsx
 import React, { useState, useEffect } from "react";
 import "./ArchiveView.css";
 
+// --- 1. HERE IS THE HARDCODED EXAMPLE DATA ---
+const hardcodedArchivedItems = [
+  {
+    id: 9001,
+    name: "Old Blue Umbrella",
+    category: "Umbrellas",
+    dateFound: "2024-01-10",
+    archiveDate: "2025-01-10",
+    archiveReason: "expired",
+  },
+  {
+    id: 9002,
+    name: "Cracked iPhone 8",
+    category: "Electronics",
+    dateFound: "2024-05-15",
+    archiveDate: "2024-06-01",
+    archiveReason: "removed",
+  },
+];
+// -------------------------------------------
+
 const ArchiveView = () => {
-  const [archivedItems, setArchivedItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // --- 2. STATES ARE UPDATED ---
+  const [archivedItems, setArchivedItems] = useState(hardcodedArchivedItems);
+  const [loading, setLoading] = useState(false); // Set to false, no API call
   const [filter, setFilter] = useState("all");
+  // -----------------------------
 
-  useEffect(() => {
-    fetchArchivedItems();
-  }, []);
-
-  const fetchArchivedItems = async () => {
-    try {
-      // TODO: Replace with your actual API endpoint
-      const response = await fetch("/api/archived-items");
-      const data = await response.json();
-      setArchivedItems(data);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching archived items:", error);
-      setLoading(false);
-    }
-  };
+  // --- 3. THE useEffect AND fetchArchivedItems ARE REMOVED ---
+  // (No need to fetch data from an API)
+  // -----------------------------------------------------
 
   const handleRestore = async (itemId) => {
+    // This is just a simulation, it will remove the item from the list
+    console.log("Restoring item:", itemId);
+    alert("This is a demo. Restoring the item would remove it from this list.");
+    setArchivedItems(archivedItems.filter((item) => item.id !== itemId));
+    
+    /* // TODO: When you implement the archive backend, the real code would be:
     try {
-      // TODO: Replace with your actual API endpoint
-      const response = await fetch(`/api/archived-items/${itemId}/restore`, {
-        method: "POST",
-      });
-
-      if (response.ok) {
-        // Remove item from local state
-        setArchivedItems(archivedItems.filter((item) => item.id !== itemId));
-        alert("Item restored successfully!");
-      } else {
-        alert("Failed to restore item");
-      }
+      // 1. Update the item's status in the database (e.g., set to 'pending')
+      // 2. Remove it from the 'archived' table (or update an 'is_archived' flag)
+      // 3. Re-fetch data or rely on the dashboard's realtime listener to update
     } catch (error) {
       console.error("Error restoring item:", error);
       alert("Error restoring item");
     }
+    */
   };
 
   const filteredItems = archivedItems.filter((item) => {

@@ -1,9 +1,12 @@
+// src/components/AdminLogin.jsx
+
 import React, { useState } from 'react';
 import { Card, Button, Form, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import tigerLogo from '../assets/tiger.png'; 
 import cicsBuilding from '../assets/cics.png';
-import './adminLogin.css';
+import './AdminLogin.css'; // Using the CSS file you provided
+import { supabase } from '../supabaseClient'; // Import Supabase
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -18,7 +21,8 @@ const AdminLogin = () => {
     if (error) setError('');
   };
 
-  const handleSubmit = (e) => {
+  // --- THIS FUNCTION IS NOW ASYNC AND USES SUPABASE ---
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -29,15 +33,20 @@ const AdminLogin = () => {
 
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-      if (formData.username === 'admin' && formData.password === 'admin123') {
-        alert('Login successful! Redirecting to dashboard...');
-        navigate('/admin-dashboard');
-      } else {
-        setError('Invalid username or password. Please try again.');
-      }
-    }, 1000);
+    // Supabase login logic
+    const { data, error }  = await supabase.auth.signInWithPassword({
+      email: formData.username, // Supabase uses email for auth
+      password: formData.password,
+    });
+
+    setLoading(false);
+
+    if (error) {
+      setError(error.message); // Show the real error from Supabase
+    } else {
+      // Login was successful
+      navigate('/admin-dashboard');
+    }
   };
 
   return (
@@ -96,14 +105,14 @@ const AdminLogin = () => {
 
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
-              <Form.Label className="admin-login-label">Username</Form.Label>
+              <Form.Label className="admin-login-label">Email Address</Form.Label>
               <Form.Control
                 type="text"
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
                 className="admin-login-input"
-                placeholder="Admin Username"
+                placeholder="Admin Email Address" // Updated placeholder
                 disabled={loading}
                 required
               />
@@ -133,9 +142,8 @@ const AdminLogin = () => {
           </Form>
 
           <div className="admin-login-note">
-            <strong>For Development Testing:</strong><br />
-            Username: admin<br />
-            Password: admin123
+            <strong>Note:</strong><br />
+            Please use the admin email and password you created in the Supabase Authentication {">"} Users panel.
           </div>
         </Card.Body>
       </Card>

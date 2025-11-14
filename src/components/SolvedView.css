@@ -257,36 +257,37 @@ td:nth-child(2) {
   align-items: center;
 }
 
+/* --- THIS IS THE MODIFIED .btn-info --- */
 .btn-info {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: #ffffff;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 20px;
-  cursor: pointer;
+  background: white;
+  border: 1.5px solid #8b0000;
+  color: #8b0000;
+  border-radius: 8px;
+  padding: 8px 16px;
   font-size: 13px;
   font-weight: 600;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  transition: all 0.2s ease;
 }
 
 .btn-info:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
+  background: #8b0000;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(139, 0, 0, 0.2);
 }
 
 .btn-info:active {
   transform: translateY(0);
 }
 
-.btn-info::before {
-  content: '👁';
-  font-size: 14px;
-}
+/* Removed ::before pseudo-element */
+
+/* --- END OF MODIFICATION --- */
+
 
 .btn-claimed {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);

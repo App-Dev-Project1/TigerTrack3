@@ -1,6 +1,8 @@
 // SolvedView.jsx
 import React, { useState, useEffect } from 'react';
+import { X, Eye } from 'lucide-react'; // <-- 1. IMPORTED Eye and X
 import './SolvedView.css';
+import './ItemsView.css'; // <-- Import styles for the modal
 
 const SolvedView = ({ allResolvedItems, onMarkAsClaimed }) => {
   const [activeTab, setActiveTab] = useState('solved');
@@ -8,10 +10,12 @@ const SolvedView = ({ allResolvedItems, onMarkAsClaimed }) => {
   const [claimedItems, setClaimedItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Effect to separate solved (not claimed) and claimed items 
+  // --- 2. ADD STATE FOR THE MODAL ---
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedSolvedItem, setSelectedSolvedItem] = useState(null);
+
   useEffect(() => {
     setLoading(true);
-    // Filter the incoming master list into the two display lists
     const solved = allResolvedItems.filter(item => !item.isClaimed);
     const claimed = allResolvedItems.filter(item => item.isClaimed);
 
@@ -21,14 +25,15 @@ const SolvedView = ({ allResolvedItems, onMarkAsClaimed }) => {
   }, [allResolvedItems]); 
 
   const handleMarkAsClaimed = (itemId) => {
-    // Calls the handler function passed from AdminDashboard to update the master state
     if (onMarkAsClaimed) {
         onMarkAsClaimed(itemId);
     }
   };
 
-  const handleViewDetails = (itemId) => {
-    console.log('Viewing details for item:', itemId);
+  // --- 3. UPDATE THIS FUNCTION TO OPEN THE MODAL ---
+  const handleViewDetails = (item) => {
+    setSelectedSolvedItem(item); // Set the item to display
+    setShowDetailsModal(true);  // Open the modal
   };
 
   const renderTable = (items, type) => {
@@ -55,7 +60,6 @@ const SolvedView = ({ allResolvedItems, onMarkAsClaimed }) => {
         <table>
           <thead>
             <tr>
-              {/* Note: The header ID represents the Lost Report ID */}
               <th>Lost Item ID</th> 
               <th>Item Name</th>
               <th>Category</th>
@@ -67,21 +71,22 @@ const SolvedView = ({ allResolvedItems, onMarkAsClaimed }) => {
           <tbody>
             {items.map((item) => (
               <tr key={item.id}>
-                {/* --- MODIFICATION HERE: Display item.lostId instead of item.id --- */}
                 <td>{item.lostId}</td>
-                {/* ------------------------------------------------------------------ */}
                 <td>{item.name}</td>
                 <td>{item.category}</td>
                 <td>{item.claimedBy}</td> 
                 <td>{type === 'solved' ? item.resolvedDate : item.claimedDate}</td>
                 <td>
                   <div className="action-buttons">
+                    {/* --- 4. THIS BUTTON IS NOW STYLED AND FUNCTIONAL --- */}
                     <button 
-                      className="btn-info"
-                      onClick={() => handleViewDetails(item.id)}
+                      className="view-btn" // Use the correct class from ItemsView.css
+                      onClick={() => handleViewDetails(item)}
                     >
-                      View Details
+                      <Eye size={16} /> View Details
                     </button>
+                    {/* -------------------------------------------------- */}
+
                     {type === 'solved' && (
                       <button 
                         className="btn-claimed"
@@ -127,6 +132,83 @@ const SolvedView = ({ allResolvedItems, onMarkAsClaimed }) => {
           ? renderTable(solvedItems, 'solved')
           : renderTable(claimedItems, 'claimed')}
       </div>
+
+      {/* --- 5. ADD THE MODAL JSX (COPIED FROM ITEMSVIEW) --- */}
+      {showDetailsModal && selectedSolvedItem && (
+        <div className="modal-overlay" onClick={() => setShowDetailsModal(false)}>
+          <div className="modal-content modal-content-match" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h3>Solved Item Details</h3>
+                <p className="modal-subtitle">Review the details for this matched item.</p>
+              </div>
+              <button className="close-btn" onClick={() => setShowDetailsModal(false)}>
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="match-comparison">
+              {/* Lost Report Side */}
+              <div className="match-card match-card-lost">
+                <div className="match-card-header">
+                  <span className="status-dot status-dot-lost"></span>
+                  <h4>Lost Report Details</h4>
+                </div>
+                <div className="match-details">
+                  <div className="match-row">
+                    <div className="match-field"><label>Item Name</label><p>{selectedSolvedItem.lost_details?.name || 'N/A'}</p></div>
+                    <div className="match-field"><label>Category</label><p>{selectedSolvedItem.lost_details?.category || 'N/A'}</p></div>
+                  </div>
+                  <div className="match-row">
+                    <div className="match-field"><label>Owner Name</label><p>{selectedSolvedItem.lost_details?.ownerName || 'N/A'}</p></div>
+                    <div className="match-field"><label>Occupation</label><p>{selectedSolvedItem.lost_details?.occupation || 'N/A'}</p></div>
+                  </div>
+                  <div className="match-row">
+                    <div className="match-field"><label>Location</label><p>{selectedSolvedItem.lost_details?.location || 'N/A'}</p></div>
+                    <div className="match-field"><label>Date Lost</label><p>{selectedSolvedItem.lost_details?.date || 'N/A'}</p></div>
+                  </div>
+                   <div className="match-row">
+                    <div className="match-field"><label>Contact Email</label><p>{selectedSolvedItem.lost_details?.email || 'N/A'}</p></div>
+                    <div className="match-field"><label>Contact Number</label><p>{selectedSolvedItem.lost_details?.contactNumber || 'N/A'}</p></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Found Item Side */}
+              <div className="match-card match-card-found">
+                <div className="match-card-header">
+                  <span className="status-dot status-dot-found"></span>
+                  <h4>Found Item Details</h4>
+                </div>
+                <div className="match-details">
+                   <div className="match-row">
+                    <div className="match-field"><label>Item Name</label><p>{selectedSolvedItem.found_details?.name || 'N/A'}</p></div>
+                    <div className="match-field"><label>Category</label><p>{selectedSolvedItem.found_details?.category || 'N/A'}</p></div>
+                  </div>
+                  <div className="match-row">
+                    <div className="match-field"><label>Finder Name</label><p>{selectedSolvedItem.found_details?.finderName || 'N/A'}</p></div>
+                    <div className="match-field"><label>Occupation</label><p>{selectedSolvedItem.found_details?.occupation || 'N/A'}</p></div>
+                  </div>
+                  <div className="match-row">
+                    <div className="match-field"><label>Location</label><p>{selectedSolvedItem.found_details?.location || 'N/A'}</p></div>
+                    <div className="match-field"><label>Date Found</label><p>{selectedSolvedItem.found_details?.date || 'N/A'}</p></div>
+                  </div>
+                  <div className="match-row">
+                    <div className="match-field"><label>Contact Email</label><p>{selectedSolvedItem.found_details?.email || 'N/A'}</p></div>
+                    <div className="match-field"><label>Contact Number</label><p>{selectedSolvedItem.found_details?.contactNumber || 'N/A'}</p></div>
+                  </div>
+                </div>
+                {selectedSolvedItem.found_details?.photo && (
+                  <div className="match-photo">
+                    <img src={selectedSolvedItem.found_details.photo} alt={selectedSolvedItem.found_details.name} />
+                  </div>
+                )}
+              </div>
+            </div>
+            {/* Action buttons removed, as this is just a "View" modal */}
+          </div>
+        </div>
+      )}
     </>
   );
 };
