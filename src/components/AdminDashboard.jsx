@@ -50,8 +50,10 @@ const AdminDashboard = () => {
     const [claimPopup, setClaimPopup] = useState({ open: false, itemName: "" });
 
     // Fetch all data
-    const fetchAllData = useCallback(async () => {
-        setLoading(true);
+    // Added isBackground param to prevent UI flashing on updates
+    const fetchAllData = useCallback(async (isBackground = false) => {
+        if (!isBackground) setLoading(true);
+        
         try {
             // Lost items
             const { data: lostData, error: lostError } = await supabase
@@ -64,7 +66,7 @@ const AdminDashboard = () => {
             const mappedLostItems = lostData.map(item => ({
                 ...item,
                 date: item.lost_date,
-                time: formatTimeTo12Hour(item.lost_time), // Convert to 12-hour format
+                time: formatTimeTo12Hour(item.lost_time), 
                 email: item.contact_email,
                 ownerName: item.owner_name,
                 occupation: item.occupation,
@@ -84,7 +86,7 @@ const AdminDashboard = () => {
             const mappedFoundItems = foundData.map(item => ({
                 ...item,
                 date: item.found_date,
-                time: formatTimeTo12Hour(item.found_time), // Convert to 12-hour format
+                time: formatTimeTo12Hour(item.found_time), 
                 photo: item.photo_url,
                 email: item.contact_email,
                 finderName: item.finder_name,
@@ -116,11 +118,11 @@ const AdminDashboard = () => {
             console.error("Error fetching data:", error);
             alert("Could not fetch data: " + error.message);
         } finally {
-            setLoading(false);
+            if (!isBackground) setLoading(false);
         }
     }, []);
 
-    // Auth + Realtime Listener
+    // Auth Listener
     useEffect(() => {
         const checkUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
@@ -135,7 +137,7 @@ const AdminDashboard = () => {
         const changes = supabase
             .channel('db-changes')
             .on('postgres_changes', { event: '*', schema: 'public' }, () => {
-                fetchAllData();
+                fetchAllData(true); // Background update
             })
             .subscribe();
 
@@ -143,6 +145,17 @@ const AdminDashboard = () => {
             supabase.removeChannel(changes);
         };
     }, [navigate, fetchAllData]);
+
+    // Refresh data when tab changes to ensure lists are up to date
+    useEffect(() => {
+        fetchAllData(true);
+    }, [activeTab, fetchAllData]);
+
+    // Handler for restoring items from Archive
+    const handleItemRestored = () => {
+        // Fetch new data immediately in background so Items tab is ready
+        fetchAllData(true);
+    };
 
     // Confirm Match
     const handleMatchConfirmed = async (resolvedItem) => {
@@ -166,7 +179,7 @@ const AdminDashboard = () => {
             await supabase.from('lost_items').update({ status: 'solved' }).eq('id', resolvedItem.lostId);
             await supabase.from('found_items').update({ status: 'solved' }).eq('id', resolvedItem.foundId);
 
-            await fetchAllData();
+            await fetchAllData(true);
 
             setMatchPopup({
                 open: true,
@@ -193,7 +206,7 @@ const AdminDashboard = () => {
                 .eq('id', itemId);
             if (error) throw error;
 
-            await fetchAllData();
+            await fetchAllData(true);
 
             setClaimPopup({
                 open: true,
@@ -225,10 +238,10 @@ const AdminDashboard = () => {
     }, [lostItems, foundItems, solvedItems]);
 
     const renderContent = () => {
-        if (loading && activeTab !== 'dashboard') {
+        if (loading && activeTab === 'dashboard') {
             return (
                 <div style={{ padding: '40px', textAlign: 'center', fontSize: '1.2rem' }}>
-                    Loading data from database...
+                    Loading data...
                 </div>
             );
         }
@@ -252,7 +265,11 @@ const AdminDashboard = () => {
                     />
                 );
             case "archive":
-                return <ArchiveView />;
+                return (
+                    <ArchiveView 
+                        onRestore={handleItemRestored} 
+                    />
+                );
             case "dispute":
                 return <DisputeView />;
             default:
@@ -281,7 +298,7 @@ const AdminDashboard = () => {
                 </div>
             )}
 
-            {/* MATCH CONFIRMED POPUP - updated design */}
+            {/* MATCH CONFIRMED POPUP */}
             {matchPopup.open && (
                 <div className="match-overlay">
                     <div className="claim-modal">
