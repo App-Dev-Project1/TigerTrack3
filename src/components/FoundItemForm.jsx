@@ -207,7 +207,9 @@ const FoundItemForm = () => {
                   <Form.Label>Please specify the room</Form.Label>
                   <div className="custom-dropdown-wrapper">
                     <div className={`custom-dropdown-select ${!formData.floor ? 'disabled' : ''} ${isRoomDropdownOpen ? 'open' : ''}`} onClick={() => formData.floor && setIsRoomDropdownOpen(!isRoomDropdownOpen)}>
-                      <span className={formData.specificLocation ? '' : 'placeholder'}>{formData.specificLocation || ''}</span>
+                      <span className={formData.specificLocation ? '' : 'placeholder'}>
+                        {formData.specificLocation || (formData.floor ? 'Select a room' : 'Select a floor first')}
+                      </span>
                       <svg className="dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
                     </div>
                     {isRoomDropdownOpen && formData.floor && (
