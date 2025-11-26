@@ -9,6 +9,7 @@ import {
   Eye,
   X,
   Trash2,
+  CheckCircle,
 } from "lucide-react";
 import "./ItemsView.css";
 
@@ -35,7 +36,9 @@ const ItemsView = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [deleteItemType, setDeleteItemType] = useState(null); // 'lost' or 'found'
-
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+ 
   const [lostSearchTerm, setLostSearchTerm] = useState("");
   const [lostCategoryFilter, setLostCategoryFilter] = useState("All Categories");
   const [lostFloorFilter, setLostFloorFilter] = useState("All Floors");
@@ -59,6 +62,17 @@ const ItemsView = ({
     setSelectedFoundItem(null);
     setShowMatchModal(false);
   }, [initialLostItems, initialFoundItems]);
+
+  // Auto-hide success popup after 3 seconds
+  useEffect(() => {
+    if (showSuccessPopup) {
+      const timer = setTimeout(() => {
+        setShowSuccessPopup(false);
+        setSuccessMessage("");
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessPopup]);
 
   const handleLostSelect = (id) => {
     setSelectedLostId((prev) => (prev === id ? null : id));
@@ -127,18 +141,52 @@ const ItemsView = ({
     setShowDeleteModal(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!itemToDelete || !deleteItemType) return;
 
-    if (deleteItemType === 'lost' && onDeleteLostItem) {
-      onDeleteLostItem(itemToDelete.id);
-    } else if (deleteItemType === 'found' && onDeleteFoundItem) {
-      onDeleteFoundItem(itemToDelete.id);
-    }
+    try {
+      const BASE_URL = 'http://localhost:5000';
+      
+      const endpoint = deleteItemType === 'lost' 
+        ? `${BASE_URL}/api/lost/${itemToDelete.id}`
+        : `${BASE_URL}/api/found/${itemToDelete.id}`;
 
-    setShowDeleteModal(false);
-    setItemToDelete(null);
-    setDeleteItemType(null);
+      const response = await fetch(endpoint, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete item');
+      }
+
+      // Call the parent component's delete handlers to update the UI
+      if (deleteItemType === 'lost' && onDeleteLostItem) {
+        onDeleteLostItem(itemToDelete.id);
+      } else if (deleteItemType === 'found' && onDeleteFoundItem) {
+        onDeleteFoundItem(itemToDelete.id);
+      }
+
+      // Trigger a custom event to refresh the items
+      window.dispatchEvent(new Event('itemsUpdated'));
+
+      // Close modal and reset state
+      setShowDeleteModal(false);
+      setItemToDelete(null);
+      setDeleteItemType(null);
+
+      // Show success popup
+      setSuccessMessage('Item deleted successfully');
+      setShowSuccessPopup(true);
+
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert(`Failed to delete item: ${error.message}`);
+    }
   };
 
   const handleCancelDelete = () => {
@@ -269,13 +317,13 @@ const ItemsView = ({
     Math.ceil(filteredFoundItems.length / itemsPerPage) || 1;
 
   useEffect(() => {
-  const refreshItems = () => fetchItems();
-  window.addEventListener("itemsUpdated", refreshItems);
+    const refreshItems = () => fetchItems();
+    window.addEventListener("itemsUpdated", refreshItems);
 
-  return () => {
-    window.removeEventListener("itemsUpdated", refreshItems);
-  };
-}, []);
+    return () => {
+      window.removeEventListener("itemsUpdated", refreshItems);
+    };
+  }, []);
   
   return (
     <div className="items-container">
@@ -284,6 +332,18 @@ const ItemsView = ({
           All Items
         </h2>
       </div>
+
+      {/* Success Popup */}
+      {showSuccessPopup && (
+        <div className="success-popup-overlay">
+          <div className="success-popup">
+            <div className="success-popup-content">
+              <CheckCircle size={24} className="success-icon" />
+              <span className="success-message">{successMessage}</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Lost Items Section */}
       <div className="section">

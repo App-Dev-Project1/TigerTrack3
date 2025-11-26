@@ -4,9 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import tigerLogo from '../assets/tiger.png';
 import './LostItemForm.css';
 
-// --- IMPORT THE CONTROLLER ---
-import { submitLostItemReport } from '../controllers/LostItemController';
-
 const LostItemForm = () => {
   const navigate = useNavigate();
   
@@ -30,6 +27,7 @@ const LostItemForm = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isRoomDropdownOpen, setIsRoomDropdownOpen] = useState(false);
 
   // Get current date in Philippine timezone (UTC+8)
@@ -75,17 +73,33 @@ const LostItemForm = () => {
     }
   };
 
-  // --- UPDATED SUBMIT FUNCTION ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // The complex logic is now handled by the controller
-      await submitLostItemReport(formData);
+      const BASE_URL = 'http://localhost:5000';
       
+      const response = await fetch(`${BASE_URL}/api/lost`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ formData }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit lost item report');
+      }
+
+      setSuccessMessage(data.message || 'Your lost item report has been submitted successfully.');
       setIsSubmitting(false);
       setShowSuccessModal(true);
+      
+      // Trigger a custom event to refresh the items
+      window.dispatchEvent(new Event('itemsUpdated'));
       
       // Reset form
       setFormData({
@@ -235,7 +249,7 @@ const LostItemForm = () => {
             <div className="success-checkmark"><svg className="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52"><circle className="checkmark-circle" cx="26" cy="26" r="25" fill="none"/><path className="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg></div>
           </div>
           <h3 className="modal-title">Success!</h3>
-          <p className="modal-message">Your lost item report has been submitted successfully.</p>
+          <p className="modal-message">{successMessage}</p>
           <Button className="modal-button success-button" onClick={() => { setShowSuccessModal(false); navigate('/'); }}>Return to Home</Button>
         </Modal.Body>
       </Modal>
@@ -254,4 +268,4 @@ const LostItemForm = () => {
   );
 };
 
-export default LostItemForm
+export default LostItemForm;

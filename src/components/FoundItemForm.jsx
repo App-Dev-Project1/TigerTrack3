@@ -4,9 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import tigerLogo from '../assets/tiger.png';
 import './FoundItemForm.css';
 
-// --- IMPORT THE CONTROLLER ---
-import { submitFoundItemReport } from '../controllers/FoundItemController';
-
 const FoundItemForm = () => {
   const navigate = useNavigate();
 
@@ -118,18 +115,36 @@ const FoundItemForm = () => {
     setTimeout(startCamera, 50);
   };
 
-  // --- UPDATED SUBMIT FUNCTION ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // The logic is now delegated to the controller
-      const result = await submitFoundItemReport(formData, photoPreview);
+      const BASE_URL = 'http://localhost:5000';
       
-      setSuccessMessage(result.message);
+      const response = await fetch(`${BASE_URL}/api/found`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          formData,
+          photoUrl: photoPreview 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit found item report');
+      }
+
+      setSuccessMessage(data.message || 'Your found item report has been submitted successfully.');
       setIsSubmitting(false);
       setShowSuccessModal(true);
+      
+      // Trigger a custom event to refresh the items
+      window.dispatchEvent(new Event('itemsUpdated'));
       
       // Reset form
       setFormData({

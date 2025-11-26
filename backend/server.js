@@ -17,10 +17,10 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 // const disputeRoutes = require('./routes/disputeRoutes'); // (Placeholder for later)
 
 // --- Register Routes ---
-app.use('/api/auth', authRoutes);         // Endpoints: /api/auth/login, etc.
-app.use('/api/items/lost', lostItemRoutes);   // Endpoints: /api/items/lost
-app.use('/api/items/found', foundItemRoutes); // Endpoints: /api/items/found
-app.use('/api/dashboard', dashboardRoutes);   // Endpoints: /api/dashboard/stats
+app.use('/api/auth', authRoutes);
+app.use('/api/lost', lostItemRoutes);     // Use this consistently
+app.use('/api/found', foundItemRoutes);   // Use this consistently
+app.use('/api/dashboard', dashboardRoutes);
 
 // Root Test
 app.get('/', (req, res) => {

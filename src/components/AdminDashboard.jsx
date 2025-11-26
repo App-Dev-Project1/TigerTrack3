@@ -218,6 +218,35 @@ const AdminDashboard = () => {
             alert("Error: " + error.message);
         }
     };
+    // Delete Lost Item Handler
+const handleDeleteLostItem = async (id) => {
+    try {
+        // Optimistically update UI immediately
+        setLostItems(prevItems => prevItems.filter(item => item.id !== id));
+        
+        // Also refresh data from server to ensure sync
+        await fetchAllData(true);
+    } catch (error) {
+        console.error("Error deleting lost item:", error);
+        // Revert by refetching if there's an error
+        await fetchAllData(true);
+    }
+};
+
+// Delete Found Item Handler
+const handleDeleteFoundItem = async (id) => {
+    try {
+        // Optimistically update UI immediately
+        setFoundItems(prevItems => prevItems.filter(item => item.id !== id));
+        
+        // Also refresh data from server to ensure sync
+        await fetchAllData(true);
+    } catch (error) {
+        console.error("Error deleting found item:", error);
+        // Revert by refetching if there's an error
+        await fetchAllData(true);
+    }
+};
 
     const confirmLogout = async () => {
         await supabase.auth.signOut();
@@ -250,13 +279,15 @@ const AdminDashboard = () => {
             case "dashboard":
                 return <DashboardView stats={stats} />;
             case "items":
-                return (
-                    <ItemsView
-                        initialLostItems={lostItems}
-                        initialFoundItems={foundItems}
-                        onMatchConfirmed={handleMatchConfirmed}
-                    />
-                );
+    return (
+        <ItemsView
+            initialLostItems={lostItems}
+            initialFoundItems={foundItems}
+            onMatchConfirmed={handleMatchConfirmed}
+            onDeleteLostItem={handleDeleteLostItem}
+            onDeleteFoundItem={handleDeleteFoundItem}
+        />
+    );
             case "solved":
                 return (
                     <SolvedView
