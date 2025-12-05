@@ -10,7 +10,14 @@ const submitLostItem = async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // 2. Logic: Format Location & Category
+    // 2. Logic: Archive Check (Older than 1 year)
+    // NOTE: Added this check to match lostItemController logic
+    const itemDate = new Date(formData.date);
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    const isOldItem = itemDate <= oneYearAgo;
+
+    // 3. Logic: Format Location & Category
     const finalLocation = 
       (formData.location === 'Room' || formData.location === 'Others') && formData.specificLocation
         ? `${formData.location}: ${formData.specificLocation}`
@@ -21,8 +28,34 @@ const submitLostItem = async (req, res) => {
         ? `Others: ${formData.specificCategory}`
         : formData.category;
 
-    // 3. Database Insert
-    const { data, error } = await supabase
+    // 4. Database Insert
+    let error;
+    let data;
+
+    if (isOldItem) {
+       const result = await supabase
+      .from('archives')
+      .insert([{
+        owner_name: formData.ownerName,
+        name: formData.itemName,
+        occupation: formData.occupancy,
+        category: finalCategory,
+        floor: formData.floor,
+        location: finalLocation,
+        item_date: formData.date,
+        item_time: formData.time,
+        description: formData.description,
+        contact_number: formData.contactNumber,
+        contact_email: formData.contactEmail,
+        archive_reason: 'unsolved', // UPDATED: Directs to Unsolved tab
+        original_table: 'lost_items',
+        status: 'archived'
+      }])
+      .select();
+      error = result.error;
+      data = result.data;
+    } else {
+      const result = await supabase
       .from('lost_items')
       .insert([{
         owner_name: formData.ownerName,
@@ -39,10 +72,13 @@ const submitLostItem = async (req, res) => {
         status: 'pending'
       }])
       .select();
+      error = result.error;
+      data = result.data;
+    }
 
     if (error) throw error;
 
-    res.status(201).json({ message: 'Lost item reported successfully', data });
+    res.status(201).json({ message: isOldItem ? 'Item archived (unsolved)' : 'Lost item reported successfully', data });
 
   } catch (error) {
     console.error('Backend Error:', error);
@@ -95,7 +131,7 @@ const submitFoundItem = async (req, res) => {
         person_name: formData.finderName,
         occupation: formData.occupancy,
         photo_url: photoUrl,
-        archive_reason: 'expired',
+        archive_reason: 'expired', // Keeps Found items as 'Overdue'
         original_table: 'found_items',
         status: 'archived'
       }]);

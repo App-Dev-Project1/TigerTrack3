@@ -37,7 +37,7 @@ const createLostItem = async (req, res) => {
         contact_email: formData.contactEmail,
         person_name: formData.ownerName,
         occupation: formData.occupancy,
-        archive_reason: 'expired',
+        archive_reason: 'unsolved', // Items from Lost form go to Unsolved
         original_table: 'lost_items',
         status: 'archived'
       }]);
@@ -88,12 +88,24 @@ const getAllLostItems = async (req, res) => {
 const deleteLostItem = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log('Deleting lost item with ID:', id); // Debug log
-    const { error } = await supabase.from('lost_items').delete().eq('id', id);
+    
+    // 1. Perform Delete AND Select the deleted record
+    const { data, error } = await supabase
+      .from('lost_items')
+      .delete()
+      .eq('id', id)
+      .select(); // <--- CRITICAL: This returns the deleted row(s)
+
     if (error) throw error;
-    res.status(200).json({ message: 'Deleted successfully' });
+
+    // 2. Check if anything was actually deleted
+    if (!data || data.length === 0) {
+      return res.status(404).json({ error: "Item not found or already deleted" });
+    }
+
+    res.status(200).json({ message: 'Deleted successfully', deletedItem: data[0] });
+
   } catch (error) {
-    console.error('Delete error:', error); // Debug log
     res.status(500).json({ error: error.message });
   }
 };

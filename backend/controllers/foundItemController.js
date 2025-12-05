@@ -40,7 +40,7 @@ const createFoundItem = async (req, res) => {
         person_name: formData.finderName,
         occupation: formData.occupancy,
         photo_url: photoUrl,
-        archive_reason: 'expired',
+        archive_reason: 'expired', // Items from Found form go to Overdue
         original_table: 'found_items',
         status: 'archived'
       }]);
@@ -93,9 +93,21 @@ const getAllFoundItems = async (req, res) => {
 const deleteFoundItem = async (req, res) => {
   try {
     const { id } = req.params;
-    const { error } = await supabase.from('found_items').delete().eq('id', id);
+
+    const { data, error } = await supabase
+      .from('found_items')
+      .delete()
+      .eq('id', id)
+      .select(); 
+
     if (error) throw error;
-    res.status(200).json({ message: 'Deleted successfully' });
+
+    if (!data || data.length === 0) {
+      return res.status(404).json({ error: "Item not found or already deleted" });
+    }
+
+    res.status(200).json({ message: 'Deleted successfully', deletedItem: data[0] });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

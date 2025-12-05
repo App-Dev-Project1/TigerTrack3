@@ -43,7 +43,7 @@ const ErrorModal = ({ title, message, onClose }) => {
 // Restore Success Modal Component
 const RestoreSuccessModal = ({ item, destination, onClose }) => {
   return (
-    <div className="solved-modal-overlay" onClick={onClose}> 
+    <div className="solved-modal-overlay" onClick={onClose}>
       <div
         className="solved-modal-content restore-success-modal"
         onClick={(e) => e.stopPropagation()}
@@ -124,34 +124,34 @@ const SolvedView = ({ allResolvedItems, onMarkAsClaimed, onRestore }) => {
   const handleConfirmRestore = async () => {
     if (!itemToRestore) return;
 
-    const itemName = itemToRestore.name.trim();
-    const destination = 'Lost Reports'; // Solved items go back to Lost Reports
+    const itemName = (itemToRestore.name || "").trim();
+    const destination = 'Lost Reports and Found Items'; // both sides get restored
     const originalItemToRestore = itemToRestore;
 
     try {
       setRestoringId(originalItemToRestore.id);
       setShowRestoreModal(false);
 
-      // Call restore function for solved items
-      const response = await supabase.rpc("restore_item_to_lost", {
-        archive_id: Number(originalItemToRestore.lostId),
+      // IMPORTANT: argument name must match SQL: solved_item_id BIGINT
+      const { data, error } = await supabase.rpc("restore_solved_item", {
+        solved_item_id: Number(originalItemToRestore.id),
       });
-
-      const { data, error } = response;
 
       if (error) {
         throw new Error(error.message);
       }
 
       if (data === true) {
-        // Update local state
-        setSolvedItems((prev) => prev.filter((i) => i.id !== originalItemToRestore.id));
-        
-        // Show success modal
-        setRestoredItemDetails({ name: itemName, destination: destination });
-        setShowSuccessModal(true); 
+        // Remove from local solved list
+        setSolvedItems((prev) =>
+          prev.filter((i) => i.id !== originalItemToRestore.id)
+        );
 
-        // Notify parent to refresh
+        // Show success modal
+        setRestoredItemDetails({ name: itemName, destination });
+        setShowSuccessModal(true);
+
+        // Notify parent to refresh lost/found lists if needed
         if (onRestore) {
           onRestore();
         }
@@ -159,7 +159,7 @@ const SolvedView = ({ allResolvedItems, onMarkAsClaimed, onRestore }) => {
         throw new Error("Restore returned false. Check database console logs.");
       }
     } catch (error) {
-      console.error('Restore failed:', error);
+      console.error("Restore failed:", error);
       setErrorMessage(`Failed to restore item: ${error.message}`);
       setShowErrorModal(true);
     } finally {
@@ -444,7 +444,7 @@ const SolvedView = ({ allResolvedItems, onMarkAsClaimed, onRestore }) => {
                 color: '#000000'
               }}
             >
-              Are you sure you want to restore <b>{itemToRestore.name.trim()}</b>?<br />
+              Are you sure you want to restore <b>{(itemToRestore.name || "").trim()}</b>?<br />
               This will move it back to active items.
             </div>
 
@@ -462,10 +462,10 @@ const SolvedView = ({ allResolvedItems, onMarkAsClaimed, onRestore }) => {
 
       {/* RESTORE SUCCESS MODAL */}
       {showSuccessModal && (
-        <RestoreSuccessModal 
-          item={restoredItemDetails.name} 
-          destination={restoredItemDetails.destination} 
-          onClose={handleCloseSuccessModal} 
+        <RestoreSuccessModal
+          item={restoredItemDetails.name}
+          destination={restoredItemDetails.destination}
+          onClose={handleCloseSuccessModal}
         />
       )}
     </>
