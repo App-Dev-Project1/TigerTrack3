@@ -450,13 +450,13 @@ const ItemsView = ({
                       className="checkbox-no-animation"
                     />
                   </td>
-                  <td>{item.id}</td>
-                  <td>{item.name}</td>
-                  <td>{item.category}</td>
-                  <td>{item.floor}</td>
-                  <td>{item.location}</td>
-                  <td>{item.date}</td>
-                  <td>{item.time}</td>
+                  <td title={item.id}>{item.id}</td>
+                  <td title={item.name}>{item.name}</td>
+                  <td title={item.category}>{item.category}</td>
+                  <td title={item.floor}>{item.floor}</td>
+                  <td title={item.location}>{item.location}</td>
+                  <td title={item.date}>{item.date}</td>
+                  <td title={item.time}>{item.time}</td>
                   <td>
                     <div className="action-buttons">
                       <button className="view-btn-solved" onClick={() => handleViewLostItem(item)}>
@@ -600,13 +600,13 @@ const ItemsView = ({
                       disabled={!selectedLostId}
                     />
                   </td>
-                  <td>{item.id}</td>
-                  <td>{item.name}</td>
-                  <td>{item.category}</td>
-                  <td>{item.floor}</td>
-                  <td>{item.location}</td>
-                  <td>{item.date}</td>
-                  <td>{item.time}</td>
+                  <td title={item.id}>{item.id}</td>
+                  <td title={item.name}>{item.name}</td>
+                  <td title={item.category}>{item.category}</td>
+                  <td title={item.floor}>{item.floor}</td>
+                  <td title={item.location}>{item.location}</td>
+                  <td title={item.date}>{item.date}</td>
+                  <td title={item.time}>{item.time}</td>
                   <td>
                     <div className="action-buttons">
                       <button className="view-btn-solved" onClick={() => handleViewFoundItem(item)}>

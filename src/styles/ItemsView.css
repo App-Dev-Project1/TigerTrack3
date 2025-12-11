@@ -91,7 +91,6 @@
 .filter-select-container {
   position: relative;
   display: inline-block;
-  /* CHANGED: Switched from min-width: 160px to width: 220px to force consistent size */
   width: 220px; 
   flex-shrink: 0;
 }
@@ -157,14 +156,15 @@
   overflow: hidden;
 }
 
+/* --- TABLE STYLES --- */
 .table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
+  table-layout: fixed; /* Ensures columns respect widths */
 }
 
 .table th {
-  padding: 20px 24px;
+  padding: 20px 12px;
   text-align: center;
   font-size: 13px;
   font-weight: 700;
@@ -175,38 +175,89 @@
 }
 
 .table td {
-  padding: 20px 24px;
+  padding: 16px 12px;
   text-align: center;
   font-size: 14px;
   color: #334155;
   border-bottom: 1px solid #f1f5f9;
   white-space: nowrap;
-  overflow: visible;
+  
+  /* CRITICAL FIX FOR OVERLAPPING TEXT */
+  overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 0; /* Forces text to truncate within the cell width */
 }
 
-.table th:first-child,
-.table td:first-child {
-  width: 90px;
-  padding-left: 36px;
-  padding-right: 36px;
+/* --- SPECIFIC COLUMN WIDTHS --- */
+
+/* 1. Checkbox */
+.table th:nth-child(1),
+.table td:nth-child(1) {
+  width: 60px;
+  max-width: none; /* Don't truncate checkbox */
+  padding-left: 0;
+  padding-right: 0;
 }
 
-.table td:first-child input[type="checkbox"] {
+.table td:nth-child(1) input[type="checkbox"] {
   display: block;
   margin: auto;
 }
 
+/* 2. ID */
+.table th:nth-child(2),
+.table td:nth-child(2) {
+  width: 60px;
+  max-width: none;
+}
+
+/* 3. Item Name */
+.table th:nth-child(3),
+.table td:nth-child(3) {
+  width: 180px; 
+  text-align: left;
+}
+
+/* 4. Category */
+.table th:nth-child(4),
+.table td:nth-child(4) {
+  width: 140px; 
+}
+
+/* 5. Floor */
+.table th:nth-child(5),
+.table td:nth-child(5) {
+  width: 100px; 
+}
+
+/* 6. Location */
+.table th:nth-child(6),
+.table td:nth-child(6) {
+  width: 120px; 
+}
+
+/* 7. Date */
+.table th:nth-child(7),
+.table td:nth-child(7) {
+  width: 110px; 
+}
+
+/* 8. Time */
+.table th:nth-child(8),
+.table td:nth-child(8) {
+  width: 90px; 
+}
+
+/* 9. Action Buttons */
 .table th:last-child,
 .table td:last-child {
-  width: 240px;
-  padding-top: 20px;
-  padding-bottom: 20px;
-  padding-left: 16px;
-  padding-right: 16px;
+  width: 140px;
+  overflow: visible; /* Allows buttons/tooltips to be seen */
+  max-width: none;
   white-space: normal;
 }
 
+/* --- ACTION BUTTONS --- */
 .action-buttons {
   display: flex !important;
   gap: 8px !important;
@@ -214,6 +265,7 @@
   align-items: center !important;
   flex-direction: row !important;
   flex-wrap: nowrap !important;
+  margin: 0 auto;
 }
 
 .view-btn,
@@ -227,11 +279,6 @@
   justify-content: center;
   align-items: center;
   gap: 8px;
-}
-
-.table th:nth-child(3),
-.table td:nth-child(3) {
-  text-align: left;
 }
 
 .sortable-header {
@@ -322,29 +369,6 @@
   color: #1e293b;
 }
 
-.view-btn {
-  background: white;
-  border: 1.5px solid #8b0000;
-  color: #8b0000;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s ease;
-  vertical-align: middle;
-}
-
-.view-btn:hover {
-  background: #8b0000;
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(139, 0, 0, 0.2);
-}
-
 .view-btn-solved {
   background: white;
   border: 1.5px solid #8b0000;
@@ -367,32 +391,12 @@
   box-shadow: 0 2px 8px rgba(139, 0, 0, 0.2);
 }
 
-.dispute-btn {
-  background: transparent;
-  border: none;
-  color: #dc2626;
-  padding: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
+.delete-icon:hover {
+  background: #fee2e2; 
+  border-radius: 50%;
 }
 
-.dispute-btn:hover {
-  color: #b91c1c;
-  transform: scale(1.1);
-}
-
-.delete-btn:hover {
-  background: #dc2626;
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
-}
-
+/* Modal Styles remain the same... */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -410,12 +414,8 @@
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modal-content {
@@ -437,14 +437,8 @@
 }
 
 @keyframes slideUp {
-  from {
-    transform: translateY(30px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 .modal-header {
@@ -561,24 +555,6 @@
   margin-top: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   border: 1px solid #e2e8f0;
-}
-
-.modal-content::-webkit-scrollbar {
-  width: 8px;
-}
-
-.modal-content::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 10px;
-}
-
-.modal-content::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 10px;
-}
-
-.modal-content::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
 }
 
 .modal-content-match {
@@ -721,7 +697,6 @@
   box-shadow: 0 4px 12px rgba(139, 0, 0, 0.3);
 }
 
-/* Success Popup Styles */
 .success-popup-overlay {
   position: fixed;
   top: 0;
@@ -768,17 +743,10 @@
 }
 
 @keyframes slideDown {
-  from {
-    transform: translateY(-20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
-/* Responsive design for filters */
 @media (max-width: 768px) {
   .search-filter-section {
     flex-direction: column;
@@ -795,29 +763,7 @@
     max-width: none;
   }
 
-  .modal-body-with-photo {
-    flex-direction: column;
-  }
-
-  .modal-right {
-    width: 100%;
-  }
-
-  .modal-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .modal-content {
-    padding: 24px;
-  }
-}
-
-@media (max-width: 968px) {
-  .match-comparison {
-    grid-template-columns: 1fr;
-  }
-
-  .modal-content-match {
-    max-width: 600px;
+  .table th, .table td {
+    padding: 12px 8px; /* Reduce padding on mobile */
   }
 }
